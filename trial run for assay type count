@@ -1,0 +1,93 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "e3b7d64c-6215-4db2-a6c5-2db4d1b7a1af",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "done\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Import relevant libraries to make HTTP requests and parse JSON response\n",
+    "import requests\n",
+    "import json\n",
+    "import csv\n",
+    "import io\n",
+    "import chembl_webresource_client as cwc\n",
+    "import pandas as pd\n",
+    "\n",
+    "print(\"done\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "978997c9-250b-4195-9aae-151588aa5773",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "{'F': 194, 'B': 1327, 'A': 31}\n"
+     ]
+    }
+   ],
+   "source": [
+    "from chembl_webresource_client.new_client import new_client\n",
+    "\n",
+    "assay = new_client.assay\n",
+    "\n",
+    "target = new_client.target\n",
+    "target1 = target.filter(chembl_id='CHEMBL206').only(['molecule_chembl_id', 'pref_name'])\n",
+    "target1\n",
+    "\n",
+    "assay = new_client.assay\n",
+    "res = assay.filter(target_chembl_id='CHEMBL206').only(['assay_chembl_id', 'assay_type'])\n",
+    "\n",
+    "len(res)\n",
+    "\n",
+    "assay_type = []\n",
+    "\n",
+    "for assay in res:\n",
+    "    #print(assay['assay_type'])\n",
+    "    assay_type.append(assay['assay_type'])\n",
+    "\n",
+    "assay_count = {}\n",
+    "\n",
+    "for assay in assay_type:\n",
+    "    assay_count[assay] = 1 + assay_count.get(assay, 0)\n",
+    "\n",
+    "print(assay_count)"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.6"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
