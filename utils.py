@@ -1,6 +1,7 @@
-import requests
 import json
+import requests
 import pandas as pd
+import logging
 
 # TARGETS
 
@@ -89,8 +90,37 @@ def get_compounds_and_assays(target_list):
         if target_json != None :
             assay_ids = get_assay_list(target,target_json)
             if assay_ids != None :
-                tca.append((target,assay_ids))
+                for aid in assay_ids:
+                    assay_pubchem = get_assay_pubchem(aid)
+                    if assay_pubchem != None :
+                        compounds = get_compound_data(aid, assay_pubchem)
+                        if compounds != None :
+                            return compounds
     return tca
+
+def get_assay_pubchem(assay_id):
+    # Get raw assay data, including CIDs and Activity data, from PubChem.
+    r = requests.get('https://pubchem.ncbi.nlm.nih.gov/assay/pcget.cgi?query=download&record_type=datatable&actvty=active&response_type=display&aid={}'.format(assay_id))
+    if (r.status_code != 200):
+        logging.info("Could not retrieve assay {} from PubChem".format(assay_id))
+        return None
+    return r.text
+
+def get_compound_data(assay_id,assay_pubchem):
+    # Get the index of the information you want, to grab from those columns later
+    listed_data = assay_pubchem.split(',')
+    # Gets index of CID location, and passes to next assay if CID column is not found
+    try:   
+        cid_index = listed_data.index("PUBCHEM_CID")
+        IC50_index = listed_data.index("IC50")
+        standard_score_index = listed_data.index("PubChem Standard Value")
+        return 1
+    except:
+        logging.warning("Missing on or more of: active compound IDs or IC50 standard score in assay {} ".format(assay_id))
+        return None
+"""
+fhand = io.StringIO(loose_data)
+"""
 
 def assay():
     pass
