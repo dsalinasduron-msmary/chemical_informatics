@@ -13,6 +13,7 @@ query AssociatedTargets {{
     id
     name
     associatedTargets(page: {{ size: {num_targets}, index: 0 }}) {{
+      count
       rows {{
         target {{
           id
@@ -26,6 +27,7 @@ query AssociatedTargets {{
 }}
     """.format(disease_id=disease_id,num_targets=num_targets)
     return query_string
+
 
 def get_targets_json_from_api(disease_id, num_targets):
     query_string = get_disease_query(disease_id,num_targets)
@@ -47,8 +49,17 @@ def get_targets_json_from_api(disease_id, num_targets):
     #Transform API response from JSON into Python dictionary and print in console
     return json.loads(r.text)
 
+def get_num_targets(disease_id):
+    response_dict = get_targets_json_from_api(disease_id, num_targets = 1)
+    count = response_dict['data']['disease']['associatedTargets']['count']
+    return count
+
 def get_targets(disease_id, num_targets):
     return get_target_dataframe(get_targets_json_from_api(disease_id,num_targets))
+
+def get_all_targets(disease_id):
+    num_targets = get_num_targets(disease_id)
+    return get_targets(disease_id, num_targets)
 
 def make_dataframe_row(disease_efo,disease_name,row):
     return(disease_efo,disease_name,row["target"]["approvedName"],row["score"],row["target"]["id"])
