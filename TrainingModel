@@ -1,0 +1,66 @@
+!pip install --pre deepchem[tensorflow]
+
+import deepchem as dc
+dc.__version__
+
+import numpy as np
+
+import os
+
+import tensorflow as tf
+from tensorflow import keras
+
+print(tf.version.VERSION)
+
+#!git clone https://github.com/dsalinasduron-msmary/chemical_informatics.git
+
+import os
+import pickle
+os.listdir()
+os.chdir('chemical_informatics')
+os.getcwd()
+
+f = open('ENSG00000128191dataframe.pickle','rb')
+compound_dataset = pickle.load(f)
+f.close()
+display(compound_dataset)
+
+smiles = compound_dataset['smiles']
+IC50 = compound_dataset['standard value']
+featurizer = dc.feat.ConvMolFeaturizer()
+compound_dataset['featurized'] = featurizer.featurize(smiles)
+compound_dataset['divided values'] = compound_dataset['standard value'].astype(float).div(108000)
+compound_dataset['pIC50'] = np.log10(compound_dataset['divided values'].astype(float)).mul(-1)
+compound_dataset['number'] = list(range(0,len(compound_dataset)))
+display(compound_dataset)
+
+#compound_dataset['pIC50'].hist()
+
+x = compound_dataset
+f = open('x.pickle','wb')
+pickle.dump(x,f)
+f.close()
+
+import pandas as pd
+training_dataset = compound_dataset.sample(frac = 0.7)
+
+#training_dataset.featurized[0].n_feat
+
+testing_dataset = (compound_dataset[~compound_dataset['number'].isin(training_dataset['number'])])
+display(testing_dataset)
+
+numpy_training_dataset = dc.data.NumpyDataset(X=training_dataset['featurized'],y=training_dataset['pIC50'].astype(float), ids=training_dataset['smiles'])
+numpy_testing_dataset = dc.data.NumpyDataset(X=testing_dataset['featurized'],y=testing_dataset['pIC50'].astype(float), ids=testing_dataset['smiles'])
+display(numpy_training_dataset)
+display(numpy_testing_dataset)
+
+model = dc.models.GraphConvModel(n_tasks=1, mode='regression', dropout=0.2, dense_layer_size=10, model_dir="/content/chemical_informatics")
+
+model.fit(numpy_training_dataset, nb_epoch=5000)
+
+model = dc.models.GraphConvModel(n_tasks=1, mode='regression', dropout=0.2, dense_layer_size=10, model_dir="/content/chemical_informatics")
+model.restore()
+
+metric = dc.metrics.Metric(dc.metrics.pearson_r2_score)
+print("Training set score:", model.evaluate(numpy_training_dataset, [metric]))
+print("Test set score:", model.evaluate(numpy_testing_dataset, [metric]))
